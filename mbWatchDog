@@ -1,23 +1,26 @@
 #!/bin/bash
 
+export LD_LIBRARY_PATH=/usr/local/lib
+
 id="0"
 
 
 check_process_running()
 {
-    id=`ps aux | grep modbusTestServer | grep -v grep | awk ' { print $2 }'`
+    id=`pgrep tesla`
     echo ${id}
 }
- 
+
 entry()
 {
     check_process_running
     if [ -z $id ] ; then
-        ${HOME}/workspace/simulators/comms/modbus/aeros/modbusTestServer
-    fi 
+        ${HOME}/workspace/tesla/tesla
+    fi  
 }
 
 # check if process running and if not running restart it.
-echo "running mdWatchdog"
+echo "running  tesla mdWatchdog"
 entry
+
 

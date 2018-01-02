@@ -1,0 +1,23 @@
+#!/bin/bash
+
+id="0"
+
+
+check_process_running()
+{
+    id=`ps aux | grep modbusTestServer | grep -v grep | awk ' { print $2 }'`
+    echo ${id}
+}
+ 
+entry()
+{
+    check_process_running
+    if [ -z $id ] ; then
+        ${HOME}/workspace/simulators/comms/modbus/aeros/modbusTestServer
+    fi 
+}
+
+# check if process running and if not running restart it.
+echo "running mdWatchdog"
+entry
+

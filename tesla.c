@@ -326,8 +326,6 @@ void *handler( void *ptr )
 {
     char *terminate;
     char status[12] = "idle";
-    printf("entering thread handler\n");
-
     thread_param_t* param = (thread_param_t*) ptr;
     ctx = param->ctx;
     mb_mapping = param->mb_mapping;
@@ -337,10 +335,9 @@ void *handler( void *ptr )
     while ( *terminate == false )
     {
         sleep(1);
-        printf("heartbeat timer %d seconds, heartbeatTimeout period %d\n", heartbeat, heartbeatTimeout );
         if ( heartbeat > heartbeatTimeout )
         {
-            printf("heartbeat not received in heartbeatTimeout configured period = %d\n", heartbeatTimeout);
+            printf("%s: heartbeat expired, current timeout = %d\n", __PRETTY_FUNCTION__, heartbeatTimeout );
             heartbeat = 0;
         }
 
@@ -374,9 +371,8 @@ void *handler( void *ptr )
 		{
 			strcpy(status,"idle");
 		}
-        update_json_file(state_of_charge, (const char*)status);
+        //update_json_file(state_of_charge, (const char*)status);
         heartbeat++;
     }
-    printf("exiting thread handler\n");
 }
 

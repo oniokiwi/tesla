@@ -23,6 +23,8 @@
 #include "main.h"
 #include "typedefs.h"
 
+static pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
+
 #define MODBUS_DEFAULT_PORT 1502
 
 enum {
@@ -72,14 +74,11 @@ int usage(int argc, char** argv)
     printf("%s [option <value>] [option <value:number-bits>] [option <value:number_registers>] ...\n", argv[0]);
     printf("\nOptions:\n");
     printf(" -p | --port\t\t\t\t # Set Modbus port to listen on for incoming requests (Default 502)\n");
-    printf(" -o | --DiscreteOutputCoils\t\t # Discrete output coils this is usually 1 bit Read/Write (Default %d:%d)\n",UT_BITS_ADDRESS,UT_BITS_NB);
-    printf(" -i | --DiscreteInputContacts\t\t # Discrete input contacts this is 1 bit Read only bit (Default %d:%d)\n",UT_INPUT_BITS_ADDRESS, UT_INPUT_BITS_NB);
-    printf(" -r | --AnalogInputRegisters\t\t # These are 16-bits Read Only registers (Default %d:%d)\n",UT_INPUT_REGISTERS_ADDRESS, UT_INPUT_REGISTERS_NB);
     printf(" -w | --AnalogOutputHoldingRegisters\t # These are 16 bits Read Write registers (Default %d:%d)\n",UT_REGISTERS_ADDRESS, UT_REGISTERS_NB);
     printf(" -h | --help\t\t\t\t # Print this help menu\n");
     printf("\nExamples:\n");
     printf("%s -p 1502 | --port 1502\t\t\t\t     # Change the listen port to 1502\n", argv[0]);
-    printf("%s -w 14012:63 | --AnalogOutputHoldingRegisters 14012:63 # Create 63 read write register starting from address 14012.\n", argv[0]);
+    printf("%s -w 14012:63 | --HoldingRegisters 14012:63 # Create 63 read holding register.\n", argv[0]);
     exit(1);
 }
 
@@ -94,12 +93,9 @@ int get_optarguments(int argc, char*argv[], optargs_t* args)
         int option_index = 0;
         static struct option long_options[] =
         {
-            {"port",                         required_argument, 0, 'p' },
-            {"DiscreteOutputCoils",          required_argument, 0, 'o' },
-            {"DiscreteInputContacts",        required_argument, 0, 'i' },
-            {"AnalogInputRegisters",         required_argument, 0, 'r' },
-            {"AnalogOutputHoldingRegisters", required_argument, 0, 'w' },
-            {"help",                         required_argument, 0, 'h' },
+            {"port",              required_argument, 0, 'p' },
+            {"HoldingRegisters",  required_argument, 0, 'w' },
+            {"help",              required_argument, 0, 'h' },
             {0, 0, 0, 0 }
         };
 
@@ -113,44 +109,14 @@ int get_optarguments(int argc, char*argv[], optargs_t* args)
                 args->port = atoi(optarg);
                 break;
 
-            case 'o':
-                if (strchr(optarg,':') == NULL)
-                {
-                    retval =  OPTARG_BAD_NUMBER_OUTPUT_DISCRETE_COILS;
-                    continue;
-                }
-                args -> DiscreteOutputCoils = atoi(optarg);
-                args -> NumberDiscreteOutputCoils = atoi(strchr(optarg,':')+1);
-                break;
-
-            case 'i':
-                if (strchr(optarg,':') == NULL)
-                {
-                    retval = OPTARG_BAD_NUMBER_INPUT_DISCRETE_COILS;
-                    continue;
-                }
-                args -> DiscreteInputContacts = atoi(optarg);
-                args -> NumberDiscreteInputContacts = atoi(strchr(optarg,':')+1);
-                break;
-
-            case 'r':
-                if (strchr(optarg,':') == NULL)
-                {
-                    retval =  OPTARG_BAD_NUMBER_INPUT_REGISTER;
-                    continue;
-                }
-                args -> AnalogInputRegisters = atoi(optarg);
-                args -> NumberAnalogInputRegisters = atoi(strchr(optarg,':')+1);
-                break;
-
             case 'w':
                 if (strchr(optarg,':') == NULL)
                 {
                     retval =  OPTARG_BAD_NUMBER_OUTPUT_REGISTER;
                     continue;
                 }
-                args -> AnalogOutputHoldingRegisters = atoi(optarg);
-                args -> NumberAnalogOutputHoldingRegisters = atoi(strchr(optarg,':')+1);
+                args -> HoldingRegisters = atoi(optarg);
+                args -> NumberHoldingRegisters = atoi(strchr(optarg,':')+1);
                 break;
 
             case 'h':
@@ -167,9 +133,6 @@ int get_optarguments(int argc, char*argv[], optargs_t* args)
     return retval;
 }
 
-
-pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
-
 int main(int argc, char*argv[])
 {
 	uint8_t *query;
@@ -181,18 +144,8 @@ int main(int argc, char*argv[])
     char terminate;
     modbus_mapping_t *mb_mapping;
     thread_param_t* thread_param;
-    bool initialised = FALSE;
     bool done = FALSE;
-    uint32_t tv_sec = 60;
-    uint32_t tv_usec = 0;
-    optargs_t args =
-    {
-        MODBUS_DEFAULT_PORT,
-        UT_BITS_ADDRESS,UT_BITS_NB,
-        UT_INPUT_BITS_ADDRESS, UT_INPUT_BITS_NB,
-        UT_INPUT_REGISTERS_ADDRESS, UT_INPUT_REGISTERS_NB,
-        UT_REGISTERS_ADDRESS, UT_REGISTERS_NB
-    };
+    optargs_t args =   {MODBUS_DEFAULT_PORT, UT_REGISTERS_ADDRESS, UT_REGISTERS_NB};
 
 
     setvbuf(stdout, NULL, _IONBF, 0);                          // disable stdout buffering
@@ -201,24 +154,17 @@ int main(int argc, char*argv[])
     {
         usage(argc, argv);
     }
-    printf("mb2http arguments...\n");
-    printf("port:%d DiscreteOutputCoils:%d(%d) DiscreteInputContacts:%d(%d) " \
-           "AnalogInputRegisters:%d(%d) AnalogOutputHoldingRegisters:%d(%d)\n",
-                    args.port,
-                    args.DiscreteOutputCoils,          args.NumberDiscreteOutputCoils,
-                    args.DiscreteInputContacts,        args.NumberDiscreteInputContacts,
-                    args.AnalogInputRegisters,         args.NumberAnalogInputRegisters,
-                    args.AnalogOutputHoldingRegisters, args.NumberAnalogOutputHoldingRegisters );
+    printf("Tesla battery simulator...\n");
+    printf("port:%d HoldingRegisters:%d(%d)\n", args.port, args.HoldingRegisters, args.NumberHoldingRegisters );
 
     ctx = modbus_new_tcp(NULL, args.port);
-    modbus_set_response_timeout(ctx, tv_sec,tv_usec);
     modbus_set_debug(ctx, TRUE);
 
 	mb_mapping = modbus_mapping_new_start_address(
-		args.DiscreteOutputCoils, args.NumberDiscreteOutputCoils,
-		args.DiscreteInputContacts, args.NumberDiscreteInputContacts,
-		args.AnalogOutputHoldingRegisters, args.NumberAnalogOutputHoldingRegisters,
-		args.AnalogInputRegisters, args.NumberAnalogInputRegisters);
+		0, 0,
+		0, 0,
+		args.HoldingRegisters, args.NumberHoldingRegisters,
+		0, 0);
 
 	if (mb_mapping == NULL)
 	{
@@ -257,6 +203,7 @@ int main(int argc, char*argv[])
         	}
         }
     } // for (;;)
+    terminate = true;
     modbus_close(ctx);
     modbus_free(ctx);
     free(query);

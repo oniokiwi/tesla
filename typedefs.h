@@ -21,15 +21,9 @@ typedef struct process_table_struct
 
 typedef struct optargs_struct
 {
-    unsigned int port;                                       // port number for modbus server to listen
-    unsigned int DiscreteOutputCoils;                        // Read - Write
-    unsigned int NumberDiscreteOutputCoils;                  // Number of Discrete output coil
-    unsigned int DiscreteInputContacts;                      // Read Only coil
-    unsigned int NumberDiscreteInputContacts;                // Numbber of Discrete input contacts
-    unsigned int AnalogInputRegisters;                       // Read Only register
-    unsigned int NumberAnalogInputRegisters;                 // Number of analog input registers
-    unsigned int AnalogOutputHoldingRegisters;               // Read - Write registers
-    unsigned int NumberAnalogOutputHoldingRegisters;         // Number of read - write registers
+    unsigned int port;                           // port number for modbus server to listen
+    unsigned int HoldingRegisters;               // Read - Write registers
+    unsigned int NumberHoldingRegisters;         // Number of read - write registers
 }optargs_t;
 
 

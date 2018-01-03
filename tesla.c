@@ -11,13 +11,14 @@
 #define BATTERY_POWER_RATING            230           // kW
 #define TIME_CHARGE_FROM_0_TO_100       3000          // seconds
 #define TIME_DISCHARGE_FROM_100_TO_0    2800          // seconds
+#define HEARTBEAT_TIMEOUT_DEFAULT       60
+#define STATE_OF_CHARGET_DEFAULT        50.0
 
 // Private data
 static modbus_t* ctx;
 static modbus_mapping_t *mb_mapping;
 
-static const uint16_t heartbeatTimeoutDefault = 60;
-static uint16_t heartbeatTimeout = 0;
+static uint16_t heartbeatTimeout = HEARTBEAT_TIMEOUT_DEFAULT;
 static uint16_t heartbeat = 0;
 
 static int32_t StatusFullChargeEnergy = 0;
@@ -28,16 +29,13 @@ static float battery_charge_increment = 0.0;
 static bool battery_charging = false;
 static bool battery_discharging = false;
 
-static float state_of_charge;
-
-
 static const uint32_t sign_bit_mask             = 0x80000000;
-static const float state_of_charge_default      = 50.00;
+
 static const float battery_charge_resolution    = 100.00 / (BATTERY_POWER_RATING * TIME_CHARGE_FROM_0_TO_100);     // % increase in charge per sec
 static const float battery_discharge_resolution = 100.00 / (BATTERY_POWER_RATING * TIME_DISCHARGE_FROM_100_TO_0);  // % decrease in charge per sec
 static const float battery_fully_charged        = 100.00;
 static const float battery_fully_discharged     = 0.0;
-
+static float state_of_charge = STATE_OF_CHARGET_DEFAULT;
 
 //
 // Lookup table for process functions
@@ -328,15 +326,13 @@ void *handler( void *ptr )
 {
     char *terminate;
     char status[12] = "idle";
-    //printf("entering thread handler\n");
+    printf("entering thread handler\n");
 
     thread_param_t* param = (thread_param_t*) ptr;
     ctx = param->ctx;
     mb_mapping = param->mb_mapping;
     terminate = param->terminate;
     free(param);
-    state_of_charge = state_of_charge_default; // set to default state of charge value
-    heartbeatTimeout = heartbeatTimeoutDefault;
 
     while ( *terminate == false )
     {
@@ -381,6 +377,6 @@ void *handler( void *ptr )
         update_json_file(state_of_charge, (const char*)status);
         heartbeat++;
     }
-    //printf("exiting thread handler\n");
+    printf("exiting thread handler\n");
 }
 

@@ -170,18 +170,17 @@ int get_optarguments(int argc, char*argv[], optargs_t* args)
 
 pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 
-
 int main(int argc, char*argv[])
 {
 	uint8_t *query;
     extern void *handler( void *ptr );
     modbus_t *ctx;
+    int s = -1;
+    int rc;
     pthread_t thread1;
     char terminate;
     modbus_mapping_t *mb_mapping;
     thread_param_t* thread_param;
-    int s = -1;
-    int rc;
     bool initialised = FALSE;
     bool done = FALSE;
     uint32_t tv_sec = 60;
@@ -210,39 +209,35 @@ int main(int argc, char*argv[])
                     args.DiscreteInputContacts,        args.NumberDiscreteInputContacts,
                     args.AnalogInputRegisters,         args.NumberAnalogInputRegisters,
                     args.AnalogOutputHoldingRegisters, args.NumberAnalogOutputHoldingRegisters );
+
+    ctx = modbus_new_tcp(NULL, args.port);
+    modbus_set_response_timeout(ctx, tv_sec,tv_usec);
+    modbus_set_debug(ctx, TRUE);
+
+	mb_mapping = modbus_mapping_new_start_address(
+		args.DiscreteOutputCoils, args.NumberDiscreteOutputCoils,
+		args.DiscreteInputContacts, args.NumberDiscreteInputContacts,
+		args.AnalogOutputHoldingRegisters, args.NumberAnalogOutputHoldingRegisters,
+		args.AnalogInputRegisters, args.NumberAnalogInputRegisters);
+
+	if (mb_mapping == NULL)
+	{
+		printf("Failed to allocate the mapping: %s\n", modbus_strerror(errno));
+		modbus_free(ctx);
+		return -1;
+	}
+	thread_param = malloc(sizeof (thread_param_t));
+	terminate = FALSE;
+	thread_param -> ctx = ctx;
+	thread_param -> mb_mapping = mb_mapping;
+	thread_param -> mutex = mutex1;
+	thread_param -> terminate = &terminate;
+	pthread_create( &thread1, NULL, handler, thread_param);
+
+    query = malloc(MODBUS_TCP_MAX_ADU_LENGTH);
+
     for (;;)
     {
-        ctx = modbus_new_tcp(NULL, args.port);
-
-        modbus_set_response_timeout(ctx, tv_sec,tv_usec);
-        modbus_set_debug(ctx, TRUE);
-        query = malloc(MODBUS_TCP_MAX_ADU_LENGTH);
-
-        if ( initialised == FALSE )
-        {
-            mb_mapping = modbus_mapping_new_start_address(
-                args.DiscreteOutputCoils, args.NumberDiscreteOutputCoils,
-                args.DiscreteInputContacts, args.NumberDiscreteInputContacts,
-                args.AnalogOutputHoldingRegisters, args.NumberAnalogOutputHoldingRegisters,
-                args.AnalogInputRegisters, args.NumberAnalogInputRegisters);
-
-            if (mb_mapping == NULL)
-            {
-                printf("Failed to allocate the mapping: %s\n", modbus_strerror(errno));
-                modbus_free(ctx);
-                return -1;
-            }
-            initialised = TRUE;
-        }
-        thread_param = malloc(sizeof (thread_param_t));
-        terminate = FALSE;
-        thread_param -> ctx = ctx;
-        thread_param -> mb_mapping = mb_mapping;
-        thread_param -> mutex = mutex1;
-        thread_param -> terminate = &terminate;
-        pthread_create( &thread1, NULL, handler, thread_param);
-
-        printf("modbus listen TCP \n");
         s = modbus_tcp_listen(ctx, 1);
         modbus_tcp_accept(ctx, &s);
         done = FALSE;
@@ -261,9 +256,10 @@ int main(int argc, char*argv[])
         		continue;
         	}
         }
-        modbus_close(ctx);
-        modbus_free(ctx);
     } // for (;;)
+    modbus_close(ctx);
+    modbus_free(ctx);
+    free(query);
     modbus_mapping_free(mb_mapping);     // out of the loop to maintain register values
 
     return 0;

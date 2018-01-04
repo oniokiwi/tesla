@@ -24,6 +24,7 @@
 #include "typedefs.h"
 
 static pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
+static char query[MODBUS_TCP_MAX_ADU_LENGTH];
 
 #define MODBUS_DEFAULT_PORT 1502
 
@@ -135,7 +136,6 @@ int get_optarguments(int argc, char*argv[], optargs_t* args)
 
 int main(int argc, char*argv[])
 {
-	uint8_t *query;
     extern void *handler( void *ptr );
     modbus_t *ctx;
     int s = -1;
@@ -147,7 +147,6 @@ int main(int argc, char*argv[])
     bool done = FALSE;
     optargs_t args =   {MODBUS_DEFAULT_PORT, UT_REGISTERS_ADDRESS, UT_REGISTERS_NB};
 
-
     setvbuf(stdout, NULL, _IONBF, 0);                          // disable stdout buffering
     rc = get_optarguments(argc, argv, &args);
     if ( rc < OPTARG_SUCCESS )
@@ -158,7 +157,6 @@ int main(int argc, char*argv[])
     printf("port:%d HoldingRegisters:%d(%d)\n", args.port, args.HoldingRegisters, args.NumberHoldingRegisters );
 
     ctx = modbus_new_tcp(NULL, args.port);
-    modbus_set_debug(ctx, TRUE);
 
 	mb_mapping = modbus_mapping_new_start_address(
 		0, 0,
@@ -176,11 +174,8 @@ int main(int argc, char*argv[])
 	terminate = FALSE;
 	thread_param -> ctx = ctx;
 	thread_param -> mb_mapping = mb_mapping;
-	thread_param -> mutex = mutex1;
 	thread_param -> terminate = &terminate;
 	pthread_create( &thread1, NULL, handler, thread_param);
-
-    query = malloc(MODBUS_TCP_MAX_ADU_LENGTH);
 
     for (;;)
     {
@@ -206,7 +201,6 @@ int main(int argc, char*argv[])
     terminate = true;
     modbus_close(ctx);
     modbus_free(ctx);
-    free(query);
     modbus_mapping_free(mb_mapping);     // out of the loop to maintain register values
 
     return 0;

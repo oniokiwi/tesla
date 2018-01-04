@@ -25,7 +25,6 @@ static uint16_t heartbeat = 0;
 
 static int32_t StatusFullChargeEnergy = 0;
 
-static uint16_t averagesoc_multiplier = 10;
 static float battery_discharge_decrement = 0.0;
 static float battery_charge_increment = 0.0;
 static bool battery_charging = false;
@@ -271,15 +270,11 @@ int process_handler(uint16_t address, uint16_t data)
 
 void process_query(modbus_pdu_t* mb)
 {
+	const int convert_bytes2word_value = 256;
     int i,j,retval = MODBUS_EXCEPTION_ILLEGAL_DATA_ADDRESS;
 	uint16_t address,value,count;
     int len = __bswap_16(mb->mbap.length) - 2; // len - fc - unit_id
     uint8_t fc;
-
-
-    //printf("mbap: txtn_id(%d), proto_id(%d), len(%d), unit_id(%d), fc(%d)\n",
-    //		__bswap_16(mb->mbap.transport_id), __bswap_16(mb->mbap.protocol_id),
-	//		__bswap_16(mb->mbap.length), mb->mbap.unit_id, mb->fcode);
 
     for ( i = 0; i < len; i++ )
     {
@@ -288,32 +283,32 @@ void process_query(modbus_pdu_t* mb)
         {
         case MODBUS_FC_READ_HOLDING_REGISTERS:
         case MODBUS_FC_WRITE_SINGLE_REGISTER:
-        	address = (mb->data[i++] * 256) + mb->data[i++]; // address
-        	value   = (mb->data[i++] * 256) + mb->data[i++]; // data
+        	address = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // address
+        	value   = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // data
         	retval  = process_handler(address, value);
         	break;
 
         case MODBUS_FC_WRITE_MULTIPLE_REGISTERS:
-        	address = (mb->data[i++] * 256) + mb->data[i++]; // address
-        	count = (mb->data[i++] * 256) + mb->data[i++];   // register count
+        	address = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // address
+        	count = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++];   // register count
         	i++;                                             // skip over byte count
         	for ( j = 0; j < count; j++ )
         	{
-        	    value   = (mb->data[i++] * 256) + mb->data[i++]; // data
+        	    value   = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // data
         	    retval  = process_handler(address + j, value);
         	}
         	break;
 
         case MODBUS_FC_WRITE_AND_READ_REGISTERS:
-        	address = (mb->data[i++] * 256) + mb->data[i++]; // address
-        	value   = (mb->data[i++] * 256) + mb->data[i++]; // data
+        	address = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // address
+        	value   = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // data
         	retval  = process_handler(address, value);
-        	address = (mb->data[i++] * 256) + mb->data[i++]; // address
-        	count = (mb->data[i++] * 256) + mb->data[i++];   // register count
+        	address = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // address
+        	count = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++];   // register count
         	i++;                                             // skip over byte count
         	for ( j = 0; j < count; j++ )
         	{
-        	    value   = (mb->data[i++] * 256) + mb->data[i++]; // data
+        	    value   = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // data
         	    retval  = process_handler(address + j, value);
         	}
         	break;

@@ -10,6 +10,7 @@
 #include <modbus/modbus.h>
 #include "typedefs.h"
 
+#define enableDebug                   1
 #define directRealTimeout             1023
 #define directRealHeartbeat           1022
 #define statusFullChargeEnergy        205
@@ -19,6 +20,7 @@
 
 
 // proclet
+int process_enableDebug (uint16_t, uint16_t );
 int process_directRealTimeout (uint16_t, uint16_t );
 int process_directRealHeartbeat( uint16_t, uint16_t );
 int process_statusFullChargeEnergy(uint16_t, uint16_t );

@@ -42,6 +42,7 @@ static float state_of_charge = STATE_OF_CHARGET_DEFAULT;
 //
 const process_table_t process_table[] =
 {
+	{enableDebug,           0,            process_enableDebug},  // 16 bits
     {directRealTimeout,     0,      process_directRealTimeout},  // 16 bits
     {directRealHeartbeat,   0,    process_directRealHeartbeat},  // 16 bits
     {statusFullChargeEnergy,1, process_statusFullChargeEnergy},  // 32 bits
@@ -50,6 +51,18 @@ const process_table_t process_table[] =
 	{realMode,              0,               process_realMode},
     { 0,                    0,                           NULL}
 };
+
+//
+// Acks and dismisses alarms
+//
+int process_enableDebug (uint16_t index, uint16_t value)
+{
+    int retval = MODBUS_SUCCESS;
+    bool flag = value?TRUE:FALSE;
+    printf("%s - %s\n", __PRETTY_FUNCTION__, flag?"TRUE":"FALSE");
+    modbus_set_debug(ctx, flag);
+    return retval;
+}
 
 //
 // Acks and dismisses alarms

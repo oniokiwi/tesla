@@ -43,13 +43,13 @@ static float state_of_charge = STATE_OF_CHARGET_DEFAULT;
 //
 const process_table_t process_table[] =
 {
-	{enableDebug,           0,            process_enableDebug},  // 16 bits
+    {enableDebug,           0,            process_enableDebug},  // 16 bits
     {directRealTimeout,     0,      process_directRealTimeout},  // 16 bits
     {directRealHeartbeat,   0,    process_directRealHeartbeat},  // 16 bits
     {statusFullChargeEnergy,1, process_statusFullChargeEnergy},  // 32 bits
     {statusNorminalEnergy,  1,   process_statusNorminalEnergy},
     {directPower,           1,            process_directPower},
-	{realMode,              0,               process_realMode},
+    {realMode,              0,               process_realMode},
     { 0,                    0,                           NULL}
 };
 
@@ -59,10 +59,10 @@ const process_table_t process_table[] =
 int process_enableDebug (uint16_t index, uint16_t value)
 {
     int retval = MODBUS_SUCCESS;
-    debug = value?TRUE:FALSE;
     if(debug) {
-    	printf("%s - %s\n", __PRETTY_FUNCTION__, debug?"TRUE":"FALSE");
+        printf("%s - %s\n", __PRETTY_FUNCTION__, debug?"TRUE":"FALSE");
     }
+    debug = value?TRUE:FALSE;
     modbus_set_debug(ctx, debug);
     return retval;
 }
@@ -101,7 +101,7 @@ int process_directRealHeartbeat (uint16_t index, uint16_t value)
     static uint16_t previous_value = 0;
 
     if (debug) {
-    	printf("%s - value:%04x \n", __PRETTY_FUNCTION__, value);
+        printf("%s - value:%04x \n", __PRETTY_FUNCTION__, value);
     }
 
     if ( previous_value == value )
@@ -126,11 +126,11 @@ int process_statusFullChargeEnergy(uint16_t index, uint16_t value)
         address[index] = value;
         if ( index == 0 )                         // 32 bits word most significant work
         {
-        	StatusFullChargeEnergy = value << 16;
+            StatusFullChargeEnergy = value << 16;
         }
         else
         {
-        	StatusFullChargeEnergy += value;     // 32 bits word least significant work
+            StatusFullChargeEnergy += value;     // 32 bits word least significant work
         }
     }
     if (debug) {
@@ -148,21 +148,21 @@ int process_statusNorminalEnergy(uint16_t index, uint16_t value)
     uint32_t temp;
 
     if (debug) {
-    	printf("%s \n", __PRETTY_FUNCTION__ );
+        printf("%s \n", __PRETTY_FUNCTION__ );
     }
     address_offset = mb_mapping->start_registers + statusNorminalEnergy;
     address = mb_mapping->tab_registers + address_offset;
     if ( address < (mb_mapping->tab_registers + mb_mapping-> nb_registers) )
     {
-    	if ( index == 0 )
-    	{
-    		temp = (uint32_t) (state_of_charge/StatusFullChargeEnergy);
-    		address[index] = (temp << 16);
-    	}
-    	else
-    	{
-    		address[index] += temp & 0x0000FFFF;
-    	}
+        if ( index == 0 )
+        {
+            temp = (uint32_t) (state_of_charge/StatusFullChargeEnergy);
+            address[index] = (temp << 16);
+        }
+        else
+        {
+            address[index] += temp & 0x0000FFFF;
+        }
     }
 
     return retval;
@@ -179,38 +179,38 @@ int process_directPower(uint16_t index, uint16_t value)
 
     if ( index == 0 )
     {
-    	val = value << 16;
+        val = value << 16;
     }
     else
     {
-    	val  += value;                             // store set point value
-		if ( val & sign_bit_mask )
-		{
-			val = ((~val) + 1);                     // get 2nd complement value
-			if (debug) {
-				printf("%s - battery charging val(-%d)\n", __PRETTY_FUNCTION__, val);
-			}
-			battery_charging = true;
-			battery_discharging = false;
-			battery_charge_increment = ( val * battery_charge_resolution);  ;
-		}
-		else if (val > 0)
-		{
-			if (debug) {
-				printf("%s - battery discharging val(%d)\n", __PRETTY_FUNCTION__, val);
-			}
-			battery_discharging = true;
-			battery_charging = false;
-			battery_discharge_decrement = (val * battery_discharge_resolution);
-		}
-		else
-		{
-			if (debug) {
-				printf("%s - not charging val(%d)\n", __PRETTY_FUNCTION__, val);
-			}
-			battery_discharging = false;
-			battery_charging = false;
-		}
+        val  += value;                             // store set point value
+        if ( val & sign_bit_mask )
+        {
+            val = ((~val) + 1);                     // get 2nd complement value
+            if (debug) {
+                printf("%s - battery charging val(-%d)\n", __PRETTY_FUNCTION__, val);
+            }
+            battery_charging = true;
+            battery_discharging = false;
+            battery_charge_increment = ( val * battery_charge_resolution);  ;
+        }
+        else if (val > 0)
+        {
+            if (debug) {
+                printf("%s - battery discharging val(%d)\n", __PRETTY_FUNCTION__, val);
+            }
+            battery_discharging = true;
+            battery_charging = false;
+            battery_discharge_decrement = (val * battery_discharge_resolution);
+        }
+        else
+        {
+            if (debug) {
+                printf("%s - not charging val(%d)\n", __PRETTY_FUNCTION__, val);
+            }
+            battery_discharging = false;
+            battery_charging = false;
+        }
     }
 
     return retval;
@@ -223,7 +223,7 @@ int process_handler(uint16_t address, uint16_t data)
 
     for ( const process_table_t *p = process_table; p->handler != 0; p++ )
     {
-    	if ( ( address >= p->address ) && (address <= (p->number_registers + p->address)) ) {
+        if ( ( address >= p->address ) && (address <= (p->number_registers + p->address)) ) {
             retval = p->handler(address - p->address, data);
             break;
         }
@@ -270,9 +270,9 @@ int process_handler(uint16_t address, uint16_t data)
 
 void process_query(modbus_pdu_t* mb)
 {
-	const int convert_bytes2word_value = 256;
+    const int convert_bytes2word_value = 256;
     int i,j,retval = MODBUS_EXCEPTION_ILLEGAL_DATA_ADDRESS;
-	uint16_t address,value,count;
+    uint16_t address,value,count;
     int len = __bswap_16(mb->mbap.length) - 2; // len - fc - unit_id
     uint8_t fc;
 
@@ -283,46 +283,46 @@ void process_query(modbus_pdu_t* mb)
         {
         case MODBUS_FC_READ_HOLDING_REGISTERS:
         case MODBUS_FC_WRITE_SINGLE_REGISTER:
-        	address = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // address
-        	value   = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // data
-        	retval  = process_handler(address, value);
-        	break;
+            address = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // address
+            value   = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // data
+            retval  = process_handler(address, value);
+            break;
 
         case MODBUS_FC_WRITE_MULTIPLE_REGISTERS:
-        	address = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // address
-        	count = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++];   // register count
-        	i++;                                             // skip over byte count
-        	for ( j = 0; j < count; j++ )
-        	{
-        	    value   = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // data
-        	    retval  = process_handler(address + j, value);
-        	}
-        	break;
+            address = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // address
+            count = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++];   // register count
+            i++;                                             // skip over byte count
+            for ( j = 0; j < count; j++ )
+            {
+                value   = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // data
+                retval  = process_handler(address + j, value);
+            }
+            break;
 
         case MODBUS_FC_WRITE_AND_READ_REGISTERS:
-        	address = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // address
-        	value   = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // data
-        	retval  = process_handler(address, value);
-        	address = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // address
-        	count = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++];   // register count
-        	i++;                                             // skip over byte count
-        	for ( j = 0; j < count; j++ )
-        	{
-        	    value   = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // data
-        	    retval  = process_handler(address + j, value);
-        	}
-        	break;
+            address = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // address
+            value   = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // data
+            retval  = process_handler(address, value);
+            address = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // address
+            count = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++];   // register count
+            i++;                                             // skip over byte count
+            for ( j = 0; j < count; j++ )
+            {
+                value   = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // data
+                retval  = process_handler(address + j, value);
+            }
+            break;
 
         default:
-        	if (debug) {
-        	    printf ("default - %d\n", retval);
-        	}
+            if (debug) {
+                printf ("default - %d\n", retval);
+            }
             retval = MODBUS_EXCEPTION_ILLEGAL_FUNCTION;
-			break;
+            break;
         }
     }
     if ( retval == MODBUS_SUCCESS)
-    	modbus_reply(ctx, (uint8_t*)mb, sizeof(mbap_header_t) + sizeof(fc) + len, mb_mapping); // subtract function code
+        modbus_reply(ctx, (uint8_t*)mb, sizeof(mbap_header_t) + sizeof(fc) + len, mb_mapping); // subtract function code
     else
        modbus_reply_exception(ctx, (uint8_t*)mb, retval);
 }
@@ -367,48 +367,48 @@ void *handler( void *ptr )
         sleep(1);
         if ( heartbeat > heartbeatTimeout )
         {
-        	if ( debug ) {
+            if ( debug ) {
                 printf("%s: heartbeat expired, current timeout = %d\n", __PRETTY_FUNCTION__, heartbeatTimeout );
-        	}
+            }
             heartbeat = 0;
         }
 
-		if (battery_charging)
-		{
-			if ( debug ) {
-			    strcpy(status,"charging");
-			}
-			if ( (state_of_charge + battery_charge_increment) <= battery_fully_charged )
-			{
-				state_of_charge += battery_charge_increment;
-			}
-			else
-			{
-				state_of_charge = battery_fully_charged;
-				battery_charging = false;
-			}
-		}
-		else if (battery_discharging)
-		{
-			if ( debug ) {
-			    strcpy(status,"discharging");
-			}
-			if ( (state_of_charge - battery_discharge_decrement) >= battery_fully_discharged )
-			{
-				state_of_charge -= battery_discharge_decrement;
-			}
-			else
-			{
-				state_of_charge = battery_fully_discharged;
-				battery_discharging = false;
-			}
-		}
-		else
-		{
-			if ( debug ) {
-			    strcpy(status,"idle");
-			}
-		}
+        if (battery_charging)
+        {
+            if ( debug ) {
+                strcpy(status,"charging");
+            }
+            if ( (state_of_charge + battery_charge_increment) <= battery_fully_charged )
+            {
+                state_of_charge += battery_charge_increment;
+            }
+            else
+            {
+                state_of_charge = battery_fully_charged;
+                battery_charging = false;
+            }
+        }
+        else if (battery_discharging)
+        {
+            if ( debug ) {
+                strcpy(status,"discharging");
+            }
+            if ( (state_of_charge - battery_discharge_decrement) >= battery_fully_discharged )
+            {
+                state_of_charge -= battery_discharge_decrement;
+            }
+            else
+            {
+                state_of_charge = battery_fully_discharged;
+                battery_discharging = false;
+            }
+        }
+        else
+        {
+            if ( debug ) {
+                strcpy(status,"idle");
+            }
+        }
         //update_json_file(state_of_charge, (const char*)status);
         heartbeat++;
     }

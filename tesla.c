@@ -44,6 +44,7 @@ static float state_of_charge = STATE_OF_CHARGET_DEFAULT;
 const process_table_t process_table[] =
 {
     {enableDebug,           0,            process_enableDebug},  // 16 bits
+    {firmwareVersion,       0,        process_firmwareVersion},  // 16 bits
     {directRealTimeout,     0,      process_directRealTimeout},  // 16 bits
     {directRealHeartbeat,   0,    process_directRealHeartbeat},  // 16 bits
     {statusFullChargeEnergy,1, process_statusFullChargeEnergy},  // 32 bits
@@ -64,6 +65,29 @@ int process_enableDebug (uint16_t index, uint16_t value)
     }
     debug = value?TRUE:FALSE;
     modbus_set_debug(ctx, debug);
+    return retval;
+}
+
+//
+// report dummy version number
+//
+int process_firmwareVersion (uint16_t index, uint16_t value)
+{
+    uint16_t *address;
+    uint16_t address_offset;
+    int retval = MODBUS_SUCCESS; // need to figure out what this constant is
+
+    address_offset = mb_mapping->start_registers + firmwareVersion;
+    address = mb_mapping->tab_registers + address_offset;
+    if ( address < (mb_mapping->tab_registers + mb_mapping-> nb_registers) )
+    {
+        address[0] = 0x7630; // V0
+        address[1] = 0x2E31; // .1
+        address[2] = 0x2E33; // .3
+    }
+    if (debug) {
+        printf("%s Version = V0.1.3 \n", __PRETTY_FUNCTION__ );
+    }
     return retval;
 }
 

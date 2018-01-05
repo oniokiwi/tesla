@@ -18,7 +18,6 @@
 #include "main.h"
 #include "typedefs.h"
 
-static pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 static char query[MODBUS_TCP_MAX_ADU_LENGTH];
 
 #define MODBUS_DEFAULT_PORT 1502
@@ -60,7 +59,7 @@ int main(int argc, char*argv[])
             break;
 
         case 'w':
-        	holding_register = atoi(optarg);
+            holding_register = atoi(optarg);
             break;
 
         default:
@@ -72,24 +71,24 @@ int main(int argc, char*argv[])
 
     ctx = modbus_new_tcp(NULL, port);
 
-	mb_mapping = modbus_mapping_new_start_address(
-		0, 0,
-		0, 0,
-		0, holding_register,
-		0, 0);
+    mb_mapping = modbus_mapping_new_start_address(
+        0, 0,
+        0, 0,
+        0, holding_register,
+        0, 0);
 
-	if (mb_mapping == NULL)
-	{
-		printf("Failed to allocate the mapping: %s\n", modbus_strerror(errno));
-		modbus_free(ctx);
-		return -1;
-	}
-	thread_param = malloc(sizeof (thread_param_t));
-	terminate = FALSE;
-	thread_param -> ctx = ctx;
-	thread_param -> mb_mapping = mb_mapping;
-	thread_param -> terminate = &terminate;
-	pthread_create( &thread1, NULL, handler, thread_param);
+    if (mb_mapping == NULL)
+    {
+        printf("Failed to allocate the mapping: %s\n", modbus_strerror(errno));
+        modbus_free(ctx);
+        return -1;
+    }
+    thread_param = malloc(sizeof (thread_param_t));
+    terminate = FALSE;
+    thread_param -> ctx = ctx;
+    thread_param -> mb_mapping = mb_mapping;
+    thread_param -> terminate = &terminate;
+    pthread_create( &thread1, NULL, handler, thread_param);
 
     for (;;)
     {
@@ -98,18 +97,18 @@ int main(int argc, char*argv[])
         done = FALSE;
         while (!done)
         {
-        	rc = modbus_receive(ctx, query);
-        	switch (rc)
-        	{
-        	case -1:
-        		close(s); // close the socket
-        		done = TRUE;
-        		break;
+            rc = modbus_receive(ctx, query);
+            switch (rc)
+            {
+            case -1:
+                close(s); // close the socket
+                done = TRUE;
+                break;
 
-        	default:
-       		    process_query((modbus_pdu_t*)query);
-        		continue;
-        	}
+            default:
+                process_query((modbus_pdu_t*)query);
+                continue;
+            }
         }
     } // for (;;)
     terminate = true;

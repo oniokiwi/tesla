@@ -60,9 +60,7 @@ const process_table_t process_table[] =
 int process_enableDebug (uint16_t index, uint16_t value)
 {
     int retval = MODBUS_SUCCESS;
-    if(debug) {
-        printf("%s - %s\n", __PRETTY_FUNCTION__, debug?"TRUE":"FALSE");
-    }
+    printf("%s - %s\n", __PRETTY_FUNCTION__, value?"TRUE":"FALSE");
     debug = value?TRUE:FALSE;
     modbus_set_debug(ctx, debug);
     return retval;
@@ -245,8 +243,7 @@ int process_handler(uint16_t address, uint16_t data)
 {
     int retval = MODBUS_EXCEPTION_ILLEGAL_DATA_ADDRESS;
 
-    for ( const process_table_t *p = process_table; p->handler != 0; p++ )
-    {
+    for ( const process_table_t *p = process_table; p->handler != 0; p++ ) {
         if ( ( address >= p->address ) && (address <= (p->number_registers + p->address)) ) {
             retval = p->handler(address - p->address, data);
             break;
@@ -300,11 +297,9 @@ void process_query(modbus_pdu_t* mb)
     int len = __bswap_16(mb->mbap.length) - 2; // len - fc - unit_id
     uint8_t fc;
 
-    for ( i = 0; i < len; i++ )
-    {
+    for ( i = 0; i < len; i++ ) {
         fc = mb->fcode;
-        switch ( fc )
-        {
+        switch ( fc ){
         case MODBUS_FC_READ_HOLDING_REGISTERS:
         case MODBUS_FC_WRITE_SINGLE_REGISTER:
             address = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // address
@@ -316,8 +311,7 @@ void process_query(modbus_pdu_t* mb)
             address = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // address
             count = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++];   // register count
             i++;                                             // skip over byte count
-            for ( j = 0; j < count; j++ )
-            {
+            for ( j = 0; j < count; j++ ){
                 value   = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // data
                 retval  = process_handler(address + j, value);
             }
@@ -330,8 +324,7 @@ void process_query(modbus_pdu_t* mb)
             address = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // address
             count = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++];   // register count
             i++;                                             // skip over byte count
-            for ( j = 0; j < count; j++ )
-            {
+            for ( j = 0; j < count; j++ ){
                 value   = (mb->data[i++] * convert_bytes2word_value) + mb->data[i++]; // data
                 retval  = process_handler(address + j, value);
             }

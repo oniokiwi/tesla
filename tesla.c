@@ -23,7 +23,8 @@ static bool debug = false;
 static uint16_t heartbeatTimeout = HEARTBEAT_TIMEOUT_DEFAULT;
 static uint16_t heartbeat = 0;
 
-static int32_t StatusFullChargeEnergy = 0;
+static int32_t StatusFullChargeEnergy = 100;
+static int32_t StatusNorminalEnergy   = 50;
 
 static float battery_discharge_decrement = 0.0;
 static float battery_charge_increment = 0.0;
@@ -135,7 +136,7 @@ int process_directRealHeartbeat (uint16_t index, uint16_t value)
 }
 
 
-int process_statusFullChargeEnergy(uint16_t index, uint16_t value)
+int process_statusFullChargeEnergy(uint16_t index, uint16_t number_register)
 {
     uint16_t *address;
     uint16_t address_offset;
@@ -145,46 +146,31 @@ int process_statusFullChargeEnergy(uint16_t index, uint16_t value)
     address = mb_mapping->tab_registers + address_offset;
     if ( address < (mb_mapping->tab_registers + mb_mapping-> nb_registers) )
     {
-        address[index] = value;
-        if ( index == 0 )                         // 32 bits word most significant work
-        {
-            StatusFullChargeEnergy = value << 16;
-        }
-        else
-        {
-            StatusFullChargeEnergy += value;     // 32 bits word least significant work
-        }
+        *address         = StatusFullChargeEnergy >> 16;
+    	*(address+1)     = StatusFullChargeEnergy;
     }
     if (debug) {
-        printf("%s value = %d, StatusFullChargeEnergy %d\n", __PRETTY_FUNCTION__, value, StatusFullChargeEnergy );
+        printf("%s StatusFullChargeEnergy = %d\n", __PRETTY_FUNCTION__, StatusFullChargeEnergy );
     }
     return retval;
 }
 
-
-int process_statusNorminalEnergy(uint16_t index, uint16_t value)
+int process_statusNorminalEnergy(uint16_t index, uint16_t number_register)
 {
     uint16_t *address;
     uint16_t address_offset;
     int retval = MODBUS_SUCCESS;
-    uint32_t temp;
 
-    if (debug) {
-        printf("%s \n", __PRETTY_FUNCTION__ );
-    }
     address_offset = mb_mapping->start_registers + statusNorminalEnergy;
     address = mb_mapping->tab_registers + address_offset;
     if ( address < (mb_mapping->tab_registers + mb_mapping-> nb_registers) )
     {
-        if ( index == 0 )
-        {
-            temp = (uint32_t) (state_of_charge/StatusFullChargeEnergy);
-            address[index] = (temp << 16);
-        }
-        else
-        {
-            address[index] += temp & 0x0000FFFF;
-        }
+        *address         = StatusNorminalEnergy >> 16;
+        *(address+1)     = StatusNorminalEnergy;
+
+    }
+    if (debug) {
+        printf("%s StatusNorminalEnergy = %d\n", __PRETTY_FUNCTION__, StatusNorminalEnergy );
     }
 
     return retval;

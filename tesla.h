@@ -11,7 +11,7 @@
 #include "typedefs.h"
 
 #define enableDebug                   1
-#define dumpMemory                    3
+#define dumpMemory                    2
 #define firmwareVersion               101
 #define directRealTimeout             1023
 #define directRealHeartbeat           1022

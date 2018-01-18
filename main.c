@@ -48,6 +48,7 @@ int main(int argc, char*argv[])
     modbus_mapping_t *mb_mapping;
     thread_param_t* thread_param;
     bool done = FALSE;
+    bool initialised = FALSE;
 
     setvbuf(stdout, NULL, _IONBF, 0);                          // disable stdout buffering
 
@@ -69,29 +70,32 @@ int main(int argc, char*argv[])
     printf("Tesla battery simulator...\n");
     printf("port:%d HoldingRegisters:%d\n", port, holding_register );
 
-    ctx = modbus_new_tcp(NULL, port);
-
-    mb_mapping = modbus_mapping_new_start_address(
-        0, 0,
-        0, 0,
-        0, holding_register,
-        0, 0);
-
-    if (mb_mapping == NULL)
-    {
-        printf("Failed to allocate the mapping: %s\n", modbus_strerror(errno));
-        modbus_free(ctx);
-        return -1;
-    }
-    thread_param = malloc(sizeof (thread_param_t));
-    terminate = FALSE;
-    thread_param -> ctx = ctx;
-    thread_param -> mb_mapping = mb_mapping;
-    thread_param -> terminate = &terminate;
-    pthread_create( &thread1, NULL, handler, thread_param);
-
     for (;;)
     {
+        ctx = modbus_new_tcp(NULL, port);
+        if ( initialised == FALSE )
+        {
+            mb_mapping = modbus_mapping_new_start_address(
+               0, 0,
+               0, 0,
+               0, holding_register,
+               0, 0);
+
+            if (mb_mapping == NULL)
+            {
+                printf("Failed to allocate the mapping: %s\n", modbus_strerror(errno));
+                modbus_free(ctx);
+                return -1;
+            }
+            initialised = TRUE;
+        }
+        thread_param = malloc(sizeof (thread_param_t));
+        terminate = FALSE;
+        thread_param -> ctx = ctx;
+        thread_param -> mb_mapping = mb_mapping;
+        thread_param -> terminate = &terminate;
+        pthread_create( &thread1, NULL, handler, thread_param);
+
         s = modbus_tcp_listen(ctx, 1);
         modbus_tcp_accept(ctx, &s);
         done = FALSE;
@@ -102,7 +106,15 @@ int main(int argc, char*argv[])
             {
             case -1:
                 close(s); // close the socket
+                modbus_close(ctx);
+                modbus_free(ctx);
+                terminate = true;
+                pthread_join( thread1, NULL);
                 done = TRUE;
+                break;
+
+            case 0:
+                // No data received
                 break;
 
             default:
@@ -111,9 +123,6 @@ int main(int argc, char*argv[])
             }
         }
     } // for (;;)
-    terminate = true;
-    modbus_close(ctx);
-    modbus_free(ctx);
     modbus_mapping_free(mb_mapping);     // out of the loop to maintain register values
 
     return 0;

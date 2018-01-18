@@ -11,6 +11,7 @@
 #include "typedefs.h"
 
 #define enableDebug                   1
+#define dumpMemory                    3
 #define firmwareVersion               101
 #define directRealTimeout             1023
 #define directRealHeartbeat           1022
@@ -22,6 +23,7 @@
 
 // proclet
 int process_enableDebug (uint16_t, uint16_t );
+int process_dumpMemory (uint16_t, uint16_t );
 int process_firmwareVersion (uint16_t, uint16_t );
 int process_directRealTimeout (uint16_t, uint16_t );
 int process_directRealHeartbeat( uint16_t, uint16_t );

@@ -45,6 +45,7 @@ static float state_of_charge = STATE_OF_CHARGET_DEFAULT;
 const process_table_t process_table[] =
 {
     {enableDebug,           0,            process_enableDebug},  // 16 bits
+    {dumpMemory,            3,             process_dumpMemory},  // 32 bits
     {firmwareVersion,       0,        process_firmwareVersion},  // 16 bits
     {directRealTimeout,     0,      process_directRealTimeout},  // 16 bits
     {directRealHeartbeat,   0,    process_directRealHeartbeat},  // 16 bits
@@ -54,6 +55,41 @@ const process_table_t process_table[] =
     {realMode,              0,               process_realMode},
     { 0,                    0,                           NULL}
 };
+
+
+int process_dumpMemory (uint16_t index, uint16_t value)
+{
+    int retval = MODBUS_SUCCESS;
+    static uint32_t mem;
+    static uint32_t readings;
+
+    //printf("%s - 0x%04X, index = %d \n", __PRETTY_FUNCTION__, value, index);
+
+    //if (debug) {
+    switch (index)
+    {
+    case 0:
+      mem = value;
+      break;
+    case 1:
+       mem =  (mem << 16) + value;
+      break;
+
+    case 2:
+       readings = value;
+       break;
+
+    case 3:
+       readings =  (readings << 16) + value;
+       printf("md: mem(%d) read(%d) \n", mem, readings);
+       break;
+
+    }
+
+    return retval;
+}
+
+
 
 //
 // Acks and dismisses alarms

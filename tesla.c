@@ -31,6 +31,7 @@ static float battery_charge_increment = 0.0;
 static bool battery_charging = false;
 static bool battery_discharging = false;
 
+static const uint16_t POWER_BLOCK_ALL = 2;
 static const uint32_t sign_bit_mask             = 0x80000000;
 
 static const float battery_charge_resolution    = 100.00 / (BATTERY_POWER_RATING * TIME_CHARGE_FROM_0_TO_100);     // % increase in charge per sec
@@ -53,6 +54,7 @@ const process_table_t process_table[] =
     {statusNorminalEnergy,  1,   process_statusNorminalEnergy},
     {directPower,           1,            process_directPower},
     {realMode,              0,               process_realMode},
+	{powerBlock,            0,             process_powerBlock},
     { 0,                    0,                           NULL}
 };
 
@@ -242,6 +244,18 @@ int process_directPower(uint16_t index, uint16_t value)
         }
     }
 
+    return retval;
+}
+
+int process_powerBlock(uint16_t index, uint16_t value)
+{
+    int retval = MODBUS_SUCCESS;
+
+    printf("%s - value(%d)\n", __PRETTY_FUNCTION__, value);
+    if ( value != POWER_BLOCK_ALL )
+    {
+        retval = MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE;
+    }
     return retval;
 }
 

@@ -19,6 +19,7 @@
 #define statusNorminalEnergy          207
 #define directPower                   1020
 #define realMode                      1000
+#define powerBlock                    1002
 
 
 // proclet
@@ -31,6 +32,7 @@ int process_statusFullChargeEnergy(uint16_t, uint16_t );
 int process_statusNorminalEnergy (uint16_t, uint16_t );
 int process_directPower( uint16_t, uint16_t  );
 int process_realMode( uint16_t, uint16_t  );
+int process_powerBlock( uint16_t, uint16_t  );
 
 int  process_handler(uint16_t, uint16_t);
 void process_query(modbus_pdu_t*);

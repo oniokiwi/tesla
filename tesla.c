@@ -252,10 +252,10 @@ int process_powerBlock(uint16_t index, uint16_t value)
     int retval = MODBUS_SUCCESS;
 
     printf("%s - value(%d)\n", __PRETTY_FUNCTION__, value);
-    if ( value != POWER_BLOCK_ALL )
-    {
-        retval = MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE;
-    }
+    //if ( value != POWER_BLOCK_ALL )
+    //{
+    //    retval = MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE;
+    //}
     return retval;
 }
 

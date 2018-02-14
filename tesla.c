@@ -84,7 +84,7 @@ int process_enableDebug (uint16_t index, uint16_t value)
     int retval = MODBUS_SUCCESS;
     printf("%s - %s\n", __PRETTY_FUNCTION__, (value & 0x0001)?"TRUE":"FALSE");
     debug = value?TRUE:FALSE;
-    //modbus_set_debug(ctx, debug);
+    modbus_set_debug(ctx, debug);
     return retval;
 }
 

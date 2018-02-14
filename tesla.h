@@ -34,6 +34,7 @@ int process_directPower( uint16_t, uint16_t  );
 int process_realMode( uint16_t, uint16_t  );
 int process_powerBlock( uint16_t, uint16_t  );
 
+int process_multiple_registers(uint16_t start_address, uint16_t quantity, uint8_t* pdata);
 int  process_handler(uint16_t, uint16_t);
 void process_query(modbus_pdu_t*);
 void *handler( void *ptr );

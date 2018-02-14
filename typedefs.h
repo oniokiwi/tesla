@@ -14,7 +14,6 @@ typedef enum {false, true} bool;
 typedef struct process_table_struct
 {
 	uint16_t address;
-	uint8_t  number_registers;
 	int (*handler)(uint16_t, uint16_t);
 }process_table_t;
 
@@ -32,7 +31,7 @@ typedef struct thread_params_struct
     modbus_t *ctx;
 	modbus_mapping_t* mb_mapping;
 	pthread_mutex_t mutex;
-	char *terminate;
+	uint8_t *terminate;
 }thread_param_t;
 
 typedef struct mbap_header_struct
